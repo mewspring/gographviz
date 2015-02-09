@@ -61,8 +61,31 @@ func (this *Graph) SetName(name string) {
 //This does not imply the adding of missing nodes.
 func (this *Graph) AddPortEdge(src, srcPort, dst, dstPort string, directed bool, attrs map[string]string) {
 	this.Edges.Add(&Edge{src, srcPort, dst, dstPort, directed, attrs})
-	from, to := this.Nodes.Lookup[src], this.Nodes.Lookup[dst]
-	addEdge(from, to)
+
+	// Add edges between each node for the dominator tree construction.
+	from, ok := this.Nodes.Lookup[src]
+	if ok {
+		this.addEdges(from, dst)
+	} else if this.IsSubGraph(src) {
+		// Child nodes of the src SubGraph.
+		for srcNode := range this.Relations.ParentToChildren[src] {
+			from := this.Nodes.Lookup[srcNode]
+			this.addEdges(from, dst)
+		}
+	}
+}
+
+func (this *Graph) addEdges(from *Node, dst string) {
+	to, ok := this.Nodes.Lookup[dst]
+	if ok {
+		addEdge(from, to)
+	} else if this.IsSubGraph(dst) {
+		// Child nodes of the dst SubGraph.
+		for dstNode := range this.Relations.ParentToChildren[dst] {
+			to := this.Nodes.Lookup[dstNode]
+			addEdge(from, to)
+		}
+	}
 }
 
 //Adds an edge to the graph from node src to node dst.
