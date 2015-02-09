@@ -1,4 +1,4 @@
-package gographviz
+package dot
 
 import (
 	"github.com/awalterschulze/gographviz/ast"

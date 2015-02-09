@@ -12,7 +12,7 @@
 //See the License for the specific language governing permissions and
 //limitations under the License.
 
-package gographviz
+package dot
 
 //The analysed representation of the Graph parsed from the DOT format.
 type Graph struct {

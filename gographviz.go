@@ -12,11 +12,11 @@
 //See the License for the specific language governing permissions and
 //limitations under the License.
 
-//Package gographviz provides parsing for the DOT grammar into
+//Package dot provides parsing for the DOT grammar into
 //an abstract syntax tree representing a graph,
 //analysis of the abstract syntax tree into a more usable structure,
 //and writing back of this structure into the DOT format.
-package gographviz
+package dot
 
 import (
 	"github.com/awalterschulze/gographviz/ast"
