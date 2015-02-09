@@ -2,7 +2,10 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package ssa
+// TODO(u): Update comments so they refer to graphs and nodes instead of
+// functions and basic blocks.
+
+package dot
 
 // This file defines algorithms related to dominance.
 
@@ -27,22 +30,21 @@ import (
 
 // Idom returns the block that immediately dominates b:
 // its parent in the dominator tree, if any.
-// Neither the entry node (b.Index==0) nor recover node
-// (b==b.Parent().Recover()) have a parent.
+// The entry node (b.Index==0) doesn't have a parent.
 //
-func (b *BasicBlock) Idom() *BasicBlock { return b.dom.idom }
+func (b *Node) Idom() *Node { return b.dom.idom }
 
 // Dominees returns the list of blocks that b immediately dominates:
 // its children in the dominator tree.
 //
-func (b *BasicBlock) Dominees() []*BasicBlock { return b.dom.children }
+func (b *Node) Dominees() []*Node { return b.dom.children }
 
 // Dominates reports whether b dominates c.
-func (b *BasicBlock) Dominates(c *BasicBlock) bool {
+func (b *Node) Dominates(c *Node) bool {
 	return b.dom.pre <= c.dom.pre && c.dom.post <= b.dom.post
 }
 
-type byDomPreorder []*BasicBlock
+type byDomPreorder []*Node
 
 func (a byDomPreorder) Len() int           { return len(a) }
 func (a byDomPreorder) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
@@ -51,32 +53,32 @@ func (a byDomPreorder) Less(i, j int) bool { return a[i].dom.pre < a[j].dom.pre 
 // DomPreorder returns a new slice containing the blocks of f in
 // dominator tree preorder.
 //
-func (f *Function) DomPreorder() []*BasicBlock {
-	n := len(f.Blocks)
+func (f *Graph) DomPreorder() []*Node {
+	n := len(f.Nodes.Nodes)
 	order := make(byDomPreorder, n, n)
-	copy(order, f.Blocks)
+	copy(order, f.Nodes.Nodes)
 	sort.Sort(order)
 	return order
 }
 
-// domInfo contains a BasicBlock's dominance information.
+// domInfo contains a Node's dominance information.
 type domInfo struct {
-	idom      *BasicBlock   // immediate dominator (parent in domtree)
-	children  []*BasicBlock // nodes immediately dominated by this one
-	pre, post int32         // pre- and post-order numbering within domtree
+	idom      *Node   // immediate dominator (parent in domtree)
+	children  []*Node // nodes immediately dominated by this one
+	pre, post int32   // pre- and post-order numbering within domtree
 }
 
 // ltState holds the working state for Lengauer-Tarjan algorithm
 // (during which domInfo.pre is repurposed for CFG DFS preorder number).
 type ltState struct {
 	// Each slice is indexed by b.Index.
-	sdom     []*BasicBlock // b's semidominator
-	parent   []*BasicBlock // b's parent in DFS traversal of CFG
-	ancestor []*BasicBlock // b's ancestor with least sdom
+	sdom     []*Node // b's semidominator
+	parent   []*Node // b's parent in DFS traversal of CFG
+	ancestor []*Node // b's ancestor with least sdom
 }
 
 // dfs implements the depth-first search part of the LT algorithm.
-func (lt *ltState) dfs(v *BasicBlock, i int32, preorder []*BasicBlock) int32 {
+func (lt *ltState) dfs(v *Node, i int32, preorder []*Node) int32 {
 	preorder[i] = v
 	v.dom.pre = i // For now: DFS preorder of spanning tree of CFG
 	i++
@@ -92,7 +94,7 @@ func (lt *ltState) dfs(v *BasicBlock, i int32, preorder []*BasicBlock) int32 {
 }
 
 // eval implements the EVAL part of the LT algorithm.
-func (lt *ltState) eval(v *BasicBlock) *BasicBlock {
+func (lt *ltState) eval(v *Node) *Node {
 	// TODO(adonovan): opt: do path compression per simple LT.
 	u := v
 	for ; lt.ancestor[v.Index] != nil; v = lt.ancestor[v.Index] {
@@ -104,26 +106,26 @@ func (lt *ltState) eval(v *BasicBlock) *BasicBlock {
 }
 
 // link implements the LINK part of the LT algorithm.
-func (lt *ltState) link(v, w *BasicBlock) {
+func (lt *ltState) link(v, w *Node) {
 	lt.ancestor[w.Index] = v
 }
 
 // buildDomTree computes the dominator tree of f using the LT algorithm.
 // Precondition: all blocks are reachable (e.g. optimizeBlocks has been run).
 //
-func buildDomTree(f *Function) {
+func buildDomTree(f *Graph) {
 	// The step numbers refer to the original LT paper; the
 	// reordering is due to Georgiadis.
 
 	// Clear any previous domInfo.
-	for _, b := range f.Blocks {
+	for _, b := range f.Nodes.Nodes {
 		b.dom = domInfo{}
 	}
 
-	n := len(f.Blocks)
-	// Allocate space for 5 contiguous [n]*BasicBlock arrays:
+	n := len(f.Nodes.Nodes)
+	// Allocate space for 5 contiguous [n]*Node arrays:
 	// sdom, parent, ancestor, preorder, buckets.
-	space := make([]*BasicBlock, 5*n, 5*n)
+	space := make([]*Node, 5*n, 5*n)
 	lt := ltState{
 		sdom:     space[0:n],
 		parent:   space[n : 2*n],
@@ -132,13 +134,8 @@ func buildDomTree(f *Function) {
 
 	// Step 1.  Number vertices by depth-first preorder.
 	preorder := space[3*n : 4*n]
-	root := f.Blocks[0]
-	prenum := lt.dfs(root, 0, preorder)
-	recover := f.Recover
-	if recover != nil {
-		lt.dfs(recover, prenum, preorder)
-	}
-
+	root := f.Nodes.Nodes[0]
+	lt.dfs(root, 0, preorder)
 	buckets := space[4*n : 5*n]
 	copy(buckets, preorder)
 
@@ -183,7 +180,7 @@ func buildDomTree(f *Function) {
 	// Step 4. Explicitly define the immediate dominator of each
 	// node, in preorder.
 	for _, w := range preorder[1:] {
-		if w == root || w == recover {
+		if w == root {
 			w.dom.idom = nil
 		} else {
 			if w.dom.idom != lt.sdom[w.Index] {
@@ -194,24 +191,22 @@ func buildDomTree(f *Function) {
 		}
 	}
 
-	pre, post := numberDomTree(root, 0, 0)
-	if recover != nil {
-		numberDomTree(recover, pre, post)
-	}
+	numberDomTree(root, 0, 0)
 
-	// printDomTreeDot(os.Stderr, f)        // debugging
-	// printDomTreeText(os.Stderr, root, 0) // debugging
+	//buf := new(bytes.Buffer)
+	//printDomTreeDot(buf, f) // debugging
+	//io.Copy(os.Stderr, buf)
+	//printDomTreeText(buf, root, 0) // debugging
+	//io.Copy(os.Stderr, buf)
 
-	if f.Prog.mode&SanityCheckFunctions != 0 {
-		sanityCheckDomTree(f)
-	}
+	sanityCheckDomTree(f)
 }
 
 // numberDomTree sets the pre- and post-order numbers of a depth-first
 // traversal of the dominator tree rooted at v.  These are used to
 // answer dominance queries in constant time.
 //
-func numberDomTree(v *BasicBlock, pre, post int32) (int32, int32) {
+func numberDomTree(v *Node, pre, post int32) (int32, int32) {
 	v.dom.pre = pre
 	pre++
 	for _, child := range v.dom.children {
@@ -229,10 +224,10 @@ func numberDomTree(v *BasicBlock, pre, post int32) (int32, int32) {
 // relation computed by a naive Kildall-style forward dataflow
 // analysis (Algorithm 10.16 from the "Dragon" book).
 //
-func sanityCheckDomTree(f *Function) {
-	n := len(f.Blocks)
+func sanityCheckDomTree(f *Graph) {
+	n := len(f.Nodes.Nodes)
 
-	// D[i] is the set of blocks that dominate f.Blocks[i],
+	// D[i] is the set of blocks that dominate f.Nodes.Nodes[i],
 	// represented as a bit-set of block indices.
 	D := make([]big.Int, n)
 
@@ -243,8 +238,8 @@ func sanityCheckDomTree(f *Function) {
 	all.Set(one).Lsh(&all, uint(n)).Sub(&all, one)
 
 	// Initialization.
-	for i, b := range f.Blocks {
-		if i == 0 || b == f.Recover {
+	for i := range f.Nodes.Nodes {
+		if i == 0 {
 			// A root is dominated only by itself.
 			D[i].SetBit(&D[0], 0, 1)
 		} else {
@@ -257,8 +252,8 @@ func sanityCheckDomTree(f *Function) {
 	// Iteration until fixed point.
 	for changed := true; changed; {
 		changed = false
-		for i, b := range f.Blocks {
-			if i == 0 || b == f.Recover {
+		for i, b := range f.Nodes.Nodes {
+			if i == 0 {
 				continue
 			}
 			// Compute intersection across predecessors.
@@ -276,14 +271,10 @@ func sanityCheckDomTree(f *Function) {
 	}
 
 	// Check the entire relation.  O(n^2).
-	// The Recover block (if any) must be treated specially so we skip it.
 	ok := true
 	for i := 0; i < n; i++ {
 		for j := 0; j < n; j++ {
-			b, c := f.Blocks[i], f.Blocks[j]
-			if c == f.Recover {
-				continue
-			}
+			b, c := f.Nodes.Nodes[i], f.Nodes.Nodes[j]
 			actual := b.Dominates(c)
 			expected := D[j].Bit(i) == 1
 			if actual != expected {
@@ -294,7 +285,7 @@ func sanityCheckDomTree(f *Function) {
 	}
 
 	preorder := f.DomPreorder()
-	for _, b := range f.Blocks {
+	for _, b := range f.Nodes.Nodes {
 		if got := preorder[b.dom.pre]; got != b {
 			fmt.Fprintf(os.Stderr, "preorder[%d]==%s, want %s\n", b.dom.pre, got, b)
 			ok = false
@@ -310,7 +301,7 @@ func sanityCheckDomTree(f *Function) {
 // Printing functions ----------------------------------------
 
 // printDomTree prints the dominator tree as text, using indentation.
-func printDomTreeText(buf *bytes.Buffer, v *BasicBlock, indent int) {
+func printDomTreeText(buf *bytes.Buffer, v *Node, indent int) {
 	fmt.Fprintf(buf, "%*s%s\n", 4*indent, "", v)
 	for _, child := range v.dom.children {
 		printDomTreeText(buf, child, indent+1)
@@ -319,10 +310,10 @@ func printDomTreeText(buf *bytes.Buffer, v *BasicBlock, indent int) {
 
 // printDomTreeDot prints the dominator tree of f in AT&T GraphViz
 // (.dot) format.
-func printDomTreeDot(buf *bytes.Buffer, f *Function) {
+func printDomTreeDot(buf *bytes.Buffer, f *Graph) {
 	fmt.Fprintln(buf, "//", f)
 	fmt.Fprintln(buf, "digraph domtree {")
-	for i, b := range f.Blocks {
+	for i, b := range f.Nodes.Nodes {
 		v := b.dom
 		fmt.Fprintf(buf, "\tn%d [label=\"%s (%d, %d)\",shape=\"rectangle\"];\n", v.pre, b, v.pre, v.post)
 		// TODO(adonovan): improve appearance of edges

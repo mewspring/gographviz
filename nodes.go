@@ -20,8 +20,21 @@ import (
 
 //Represents a Node.
 type Node struct {
-	Name  string
-	Attrs Attrs
+	Name         string
+	Attrs        Attrs
+	Index        int     // index of this node within Graph.Nodes.Nodes of its parent.
+	Preds, Succs []*Node // predecessors and successors
+	dom          domInfo // dominator tree info
+}
+
+func (node *Node) String() string {
+	return node.Name
+}
+
+// addEdge adds a control-flow graph edge from from to to.
+func addEdge(from, to *Node) {
+	from.Succs = append(from.Succs, to)
+	to.Preds = append(to.Preds, from)
 }
 
 //Represents a set of Nodes.
@@ -43,6 +56,7 @@ func (this *Nodes) Add(node *Node) {
 		return
 	}
 	this.Lookup[node.Name] = node
+	node.Index = len(this.Nodes)
 	this.Nodes = append(this.Nodes, node)
 }
 

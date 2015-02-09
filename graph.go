@@ -61,6 +61,8 @@ func (this *Graph) SetName(name string) {
 //This does not imply the adding of missing nodes.
 func (this *Graph) AddPortEdge(src, srcPort, dst, dstPort string, directed bool, attrs map[string]string) {
 	this.Edges.Add(&Edge{src, srcPort, dst, dstPort, directed, attrs})
+	from, to := this.Nodes.Lookup[src], this.Nodes.Lookup[dst]
+	addEdge(from, to)
 }
 
 //Adds an edge to the graph from node src to node dst.
@@ -73,7 +75,11 @@ func (this *Graph) AddEdge(src, dst string, directed bool, attrs map[string]stri
 //If not subgraph exists use the name of the main graph.
 //This does not imply the adding of a missing subgraph.
 func (this *Graph) AddNode(parentGraph string, name string, attrs map[string]string) {
-	this.Nodes.Add(&Node{name, attrs})
+	node := &Node{
+		Name:  name,
+		Attrs: attrs,
+	}
+	this.Nodes.Add(node)
 	this.Relations.Add(parentGraph, name)
 }
 

@@ -22,6 +22,7 @@ import (
 func NewAnalysedGraph(graph *ast.Graph) *Graph {
 	g := NewGraph()
 	Analyse(graph, g)
+	buildDomTree(g)
 	return g
 }
 
