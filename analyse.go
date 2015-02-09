@@ -15,15 +15,52 @@
 package dot
 
 import (
-	"github.com/awalterschulze/gographviz/ast"
+	"fmt"
+
+	"github.com/mewfork/dot/ast"
 )
 
 //Creates a Graph structure by analysing an Abstract Syntax Tree representing a parsed graph.
 func NewAnalysedGraph(graph *ast.Graph) *Graph {
 	g := NewGraph()
 	Analyse(graph, g)
+
+	// Add edges between each node for the dominator tree construction.
+	for src, dsts := range g.Edges.SrcToDsts {
+		for dst := range dsts {
+			// Add edges between each node for the dominator tree construction.
+			from, ok := g.Nodes.Lookup[src]
+			if ok {
+				addEdges(g, from, dst)
+			} else if g.IsSubGraph(src) {
+				// Child nodes of the src SubGraph.
+				for srcNode := range g.Relations.ParentToChildren[src] {
+					from := g.Nodes.Lookup[srcNode]
+					addEdges(g, from, dst)
+				}
+			} else {
+				panic(fmt.Sprintf("unable to add edge from src %v", src))
+			}
+		}
+	}
+
 	buildDomTree(g)
 	return g
+}
+
+func addEdges(graph *Graph, from *Node, dst string) {
+	to, ok := graph.Nodes.Lookup[dst]
+	if ok {
+		addEdge(from, to)
+	} else if graph.IsSubGraph(dst) {
+		// Child nodes of the dst SubGraph.
+		for dstNode := range graph.Relations.ParentToChildren[dst] {
+			to := graph.Nodes.Lookup[dstNode]
+			addEdge(from, to)
+		}
+	} else {
+		panic(fmt.Sprintf("unable to add edge to dst %v", dst))
+	}
 }
 
 //Analyses an Abstract Syntax Tree representing a parsed graph into a newly created graph structure Interface.

@@ -21,8 +21,8 @@ package dot
 // to avoid the need for buckets of size > 1.
 
 import (
-	"bytes"
 	"fmt"
+	"io"
 	"math/big"
 	"os"
 	"sort"
@@ -194,9 +194,9 @@ func buildDomTree(f *Graph) {
 	numberDomTree(root, 0, 0)
 
 	//buf := new(bytes.Buffer)
-	//printDomTreeDot(buf, f) // debugging
+	//PrintDomTreeDot(buf, f) // debugging
 	//io.Copy(os.Stderr, buf)
-	//printDomTreeText(buf, root, 0) // debugging
+	//PrintDomTreeText(buf, root, 0) // debugging
 	//io.Copy(os.Stderr, buf)
 
 	sanityCheckDomTree(f)
@@ -300,17 +300,17 @@ func sanityCheckDomTree(f *Graph) {
 
 // Printing functions ----------------------------------------
 
-// printDomTree prints the dominator tree as text, using indentation.
-func printDomTreeText(buf *bytes.Buffer, v *Node, indent int) {
+// PrintDomTreeText prints the dominator tree as text, using indentation.
+func PrintDomTreeText(buf io.Writer, v *Node, indent int) {
 	fmt.Fprintf(buf, "%*s%s\n", 4*indent, "", v)
 	for _, child := range v.dom.children {
-		printDomTreeText(buf, child, indent+1)
+		PrintDomTreeText(buf, child, indent+1)
 	}
 }
 
-// printDomTreeDot prints the dominator tree of f in AT&T GraphViz
+// PrintDomTreeDot prints the dominator tree of f in AT&T GraphViz
 // (.dot) format.
-func printDomTreeDot(buf *bytes.Buffer, f *Graph) {
+func PrintDomTreeDot(buf io.Writer, f *Graph) {
 	fmt.Fprintln(buf, "//", f)
 	fmt.Fprintln(buf, "digraph domtree {")
 	for i, b := range f.Nodes.Nodes {
