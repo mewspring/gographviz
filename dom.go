@@ -50,15 +50,20 @@ func (a byDomPreorder) Len() int           { return len(a) }
 func (a byDomPreorder) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a byDomPreorder) Less(i, j int) bool { return a[i].dom.pre < a[j].dom.pre }
 
+// SortNodes returns a new slice containing the nodes in dominator tree preoder.
+func SortNodes(nodes []*Node) []*Node {
+	n := len(nodes)
+	order := make(byDomPreorder, n, n)
+	copy(order, nodes)
+	sort.Sort(order)
+	return order
+}
+
 // DomPreorder returns a new slice containing the blocks of f in
 // dominator tree preorder.
 //
 func (f *Graph) DomPreorder() []*Node {
-	n := len(f.Nodes.Nodes)
-	order := make(byDomPreorder, n, n)
-	copy(order, f.Nodes.Nodes)
-	sort.Sort(order)
-	return order
+	return SortNodes(f.Nodes.Nodes)
 }
 
 // domInfo contains a Node's dominance information.

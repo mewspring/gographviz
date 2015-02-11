@@ -26,6 +26,26 @@ type Graph struct {
 	Relations *Relations
 }
 
+// In returns the number of incoming edges to name in the graph.
+func (g *Graph) In(name string) int {
+	return len(g.Edges.DstToSrcs[name])
+}
+
+// Out returns the number of outgoing edges from name in the graph.
+func (g *Graph) Out(name string) int {
+	return len(g.Edges.SrcToDsts[name])
+}
+
+// HasEdge returns true if there exists a directed edge from src to dst.
+func (g *Graph) HasEdge(src, dst string) bool {
+	dsts, ok := g.Edges.SrcToDsts[src]
+	if !ok {
+		return false
+	}
+	_, ok = dsts[dst]
+	return ok
+}
+
 //Creates a new empty graph, ready to be populated.
 func NewGraph() *Graph {
 	return &Graph{
