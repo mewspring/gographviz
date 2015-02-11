@@ -679,7 +679,11 @@ func NewId(id Elem) (Id, error) {
 }
 
 func (this Id) String() string {
-	return string(this)
+	s := string(this)
+	if strings.Contains(s, " ") {
+		return fmt.Sprintf("%q", s)
+	}
+	return s
 }
 
 func (this Id) Walk(v Visitor) {
