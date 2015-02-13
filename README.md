@@ -2,6 +2,10 @@
 
 This is a fork of the [gographviz] package.
 
+## WIP
+
+This project is a *work in progress*. The implementation is *incomplete* and subject to change. The documentation may be inaccurate.
+
 # dot
 
 [![GoDoc](https://godoc.org/github.com/mewfork/dot?status.svg)](https://godoc.org/github.com/mewfork/dot)

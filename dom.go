@@ -50,7 +50,8 @@ func (a byDomPreorder) Len() int           { return len(a) }
 func (a byDomPreorder) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a byDomPreorder) Less(i, j int) bool { return a[i].dom.pre < a[j].dom.pre }
 
-// SortNodes returns a new slice containing the nodes in dominator tree preoder.
+// SortNodes returns a new slice containing the nodes in dominator tree
+// preorder.
 func SortNodes(nodes []*Node) []*Node {
 	n := len(nodes)
 	order := make(byDomPreorder, n, n)

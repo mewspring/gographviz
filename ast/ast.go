@@ -21,6 +21,7 @@ import (
 	"github.com/awalterschulze/gographviz/token"
 	"math/rand"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -675,6 +676,13 @@ func NewId(id Elem) (Id, error) {
 		return Id(""), nil
 	}
 	id_lit := string(id.(*token.Token).Lit)
+	if strings.HasPrefix(id_lit, `"`) && strings.HasSuffix(id_lit, `"`) {
+		var err error
+		id_lit, err = strconv.Unquote(id_lit)
+		if err != nil {
+			return Id(""), err
+		}
+	}
 	return Id(id_lit), nil
 }
 
