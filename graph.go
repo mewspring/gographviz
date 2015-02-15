@@ -14,6 +14,8 @@
 
 package dot
 
+import "fmt"
+
 //The analysed representation of the Graph parsed from the DOT format.
 type Graph struct {
 	Attrs     Attrs
@@ -24,6 +26,20 @@ type Graph struct {
 	Edges     *Edges
 	SubGraphs *SubGraphs
 	Relations *Relations
+}
+
+//Creates a new empty graph, ready to be populated.
+func NewGraph() *Graph {
+	return &Graph{
+		Attrs:     make(Attrs),
+		Name:      "",
+		Directed:  false,
+		Strict:    false,
+		Nodes:     NewNodes(),
+		Edges:     NewEdges(),
+		SubGraphs: NewSubGraphs(),
+		Relations: NewRelations(),
+	}
 }
 
 // In returns the number of incoming edges to name in the graph.
@@ -46,18 +62,84 @@ func (g *Graph) HasEdge(src, dst string) bool {
 	return ok
 }
 
-//Creates a new empty graph, ready to be populated.
-func NewGraph() *Graph {
-	return &Graph{
-		Attrs:     make(Attrs),
-		Name:      "",
-		Directed:  false,
-		Strict:    false,
-		Nodes:     NewNodes(),
-		Edges:     NewEdges(),
-		SubGraphs: NewSubGraphs(),
-		Relations: NewRelations(),
+// Merge merges the entry and exit node into a single node of the given name,
+// with the incoming edges of entry and the outgoing edges of exit. All nodes
+// and edges between entry and exit are removed in the process.
+func (g *Graph) Merge(entry, exit *Node, name string) error {
+	// Sanity checks.
+	if entry == exit {
+		return fmt.Errorf("invalid call to merge; entry and exit node are both %q", entry.Name)
 	}
+
+	if _, ok := g.Nodes.Lookup[name]; ok {
+		return fmt.Errorf("invalid call to merge; node %q already present in graph", name)
+	}
+	// TODO: Verify that this sanity check always holds true.
+	if entry != exit.Idom() {
+		return fmt.Errorf("unable to merge entry %q and exit %q nodes; exit is not immediately dominated by entry", entry.Name, exit.Name)
+	}
+
+	// Create a new node of the given name, with incoming edges from entry and
+	// outgoing edges from exit.
+	// TODO: Create dedicated subgraph instead of node?
+	g.AddNode(g.Name, name, nil)
+	node := g.Nodes.Lookup[name]
+
+	// Add edge from each predecessor to node.
+	node.Preds = entry.Preds
+	for _, pred := range entry.Preds {
+		pred.Succs = append(pred.Succs, node)
+		edge := g.Edges.SrcToDsts[pred.Name][entry.Name]
+		g.AddEdge(pred.Name, name, true, edge.Attrs)
+	}
+
+	// Add edge from node to each successor.
+	node.Succs = exit.Succs
+	for _, succ := range exit.Succs {
+		succ.Preds = append(succ.Preds, node)
+		edge := g.Edges.DstToSrcs[succ.Name][exit.Name]
+		g.AddEdge(name, succ.Name, true, edge.Attrs)
+	}
+
+	// Remove the nodes and edges between entry and exit, inclusively.
+	g.removeUntil(entry, exit)
+
+	// Recalculate the dominator tree.
+	buildDomTree(g)
+
+	return nil
+}
+
+// removeUntil removes the node, its edges and any of its successors recursively
+// until the exit node is reached.
+//
+// NOTE: the dominator tree has to recalculated (e.g. buildDomTree) afterwards.
+func (g *Graph) removeUntil(node, exit *Node) {
+	if node != exit {
+		// Remove any successors of the node.
+		for _, succ := range node.Succs {
+			g.removeUntil(succ, exit)
+		}
+	}
+
+	// Remove the node and all of its edges.
+	g.delNode(node)
+}
+
+// delNode deletes the node and all of its edges from the graph.
+//
+// NOTE: the dominator tree has to recalculated (e.g. buildDomTree) afterwards.
+func (g *Graph) delNode(node *Node) {
+	// Remove edges.
+	for _, dst := range g.Edges.SrcToDsts[node.Name] {
+		g.Edges.del(dst)
+	}
+	for _, src := range g.Edges.DstToSrcs[node.Name] {
+		g.Edges.del(src)
+	}
+
+	// Remove node.
+	g.Nodes.del(node)
 }
 
 //If the graph is strict then multiple edges are not allowed between the same pairs of nodes,

@@ -59,8 +59,35 @@ func (this *Edges) Add(edge *Edge) {
 	this.Edges = append(this.Edges, edge)
 }
 
-//Retrusn a sorted list of Edges.
-func (this Edges) Sorted() []*Edge {
+// del deletes the edge from the set of edges.
+//
+// NOTE: calls to Edges.del must be complemented with corresponding calls to
+// Nodes.del.
+//
+// NOTE: the dominator tree has to recalculated (e.g. buildDomTree) afterwards.
+func (edges *Edges) del(edge *Edge) {
+	// Remove source to destination edge.
+	if _, ok := edges.SrcToDsts[edge.Src]; ok {
+		delete(edges.SrcToDsts[edge.Src], edge.Dst)
+	}
+	// Remove destination to source edge.
+	if _, ok := edges.DstToSrcs[edge.Dst]; ok {
+		delete(edges.DstToSrcs[edge.Dst], edge.Src)
+	}
+
+	// Remove edge from edges list.
+	var es []*Edge
+	for _, e := range edges.Edges {
+		if e == edge {
+			continue
+		}
+		es = append(es, e)
+	}
+	edges.Edges = es
+}
+
+//Returns a sorted list of Edges.
+func (this *Edges) Sorted() []*Edge {
 	srcs := make([]string, 0, len(this.SrcToDsts))
 	for src := range this.SrcToDsts {
 		srcs = append(srcs, src)

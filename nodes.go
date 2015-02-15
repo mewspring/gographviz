@@ -60,6 +60,55 @@ func (this *Nodes) Add(node *Node) {
 	this.Nodes = append(this.Nodes, node)
 }
 
+// del deletes the node from the set of nodes.
+//
+// NOTE: calls to Nodes.del must be complemented with corresponding calls to
+// Edges.del.
+//
+// NOTE: the dominator tree has to recalculated (e.g. buildDomTree) afterwards.
+func (nodes *Nodes) del(node *Node) {
+	// Remove node from lookup.
+	delete(nodes.Lookup, node.Name)
+
+	// Remove node from the successor list of each predecessor node.
+	for _, pred := range node.Preds {
+		var succs []*Node
+		for _, succ := range pred.Succs {
+			if succ == node {
+				continue
+			}
+			succs = append(succs, succ)
+		}
+		pred.Succs = succs
+	}
+
+	// Remove node from the predecessor list of each successor node.
+	for _, succ := range node.Succs {
+		var preds []*Node
+		for _, pred := range succ.Preds {
+			if pred == node {
+				continue
+			}
+			preds = append(preds, pred)
+		}
+		succ.Preds = preds
+	}
+
+	// Remove node from nodes list.
+	var ns []*Node
+	for _, n := range nodes.Nodes {
+		if n == node {
+			continue
+		}
+		n.Index = len(ns)
+		ns = append(ns, n)
+	}
+	nodes.Nodes = ns
+
+	// Clear deleted node to help with GC.
+	*node = Node{}
+}
+
 //Returns a sorted list of nodes.
 func (this Nodes) Sorted() []*Node {
 	keys := make([]string, 0, len(this.Lookup))
