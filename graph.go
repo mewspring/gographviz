@@ -75,8 +75,8 @@ func (g *Graph) Merge(entry, exit *Node, name string) error {
 		return fmt.Errorf("invalid call to merge; node %q already present in graph", name)
 	}
 	// TODO: Verify that this sanity check always holds true.
-	if entry != exit.Idom() {
-		return fmt.Errorf("unable to merge entry %q and exit %q nodes; exit is not immediately dominated by entry", entry.Name, exit.Name)
+	if !entry.Dominates(exit) {
+		return fmt.Errorf("invalid call to merge; entry node %q does not dominated the exit node %q", entry.Name, exit.Name)
 	}
 
 	// Create a new node of the given name, with incoming edges from entry and
