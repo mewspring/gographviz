@@ -62,26 +62,17 @@ func (g *Graph) HasEdge(src, dst string) bool {
 	return ok
 }
 
-// Merge merges the entry and exit node into a single node of the given name,
-// with the incoming edges of entry and the outgoing edges of exit. All nodes
-// and edges between entry and exit are removed in the process.
-func (g *Graph) Merge(entry, exit *Node, name string) error {
-	// Sanity checks.
-	if entry == exit {
-		return fmt.Errorf("invalid call to merge; entry and exit node are both %q", entry.Name)
-	}
-
-	if _, ok := g.Nodes.Lookup[name]; ok {
-		return fmt.Errorf("invalid call to merge; node %q already present in graph", name)
-	}
-	// TODO: Verify that this sanity check always holds true.
-	if !entry.Dominates(exit) {
-		return fmt.Errorf("invalid call to merge; entry node %q does not dominated the exit node %q", entry.Name, exit.Name)
-	}
-
-	// Create a new node of the given name, with incoming edges from entry and
-	// outgoing edges from exit.
+// Replace replaces the list of nodes with a new node of the given name, with
+// the incoming edges of entry and the outgoing edges of exit.
+func (g *Graph) Replace(nodes []*Node, name string, entry, exit *Node) error {
 	// TODO: Create dedicated subgraph instead of node?
+	_, ok := g.Nodes.Lookup[name]
+	if ok {
+		return fmt.Errorf("graphs.Replace: node %q already present in graph", name)
+	}
+
+	// Create a new node of the given name, with incoming edges from the
+	// predecessors and outgoing edges to the successors.
 	g.AddNode(g.Name, name, nil)
 	node := g.Nodes.Lookup[name]
 
@@ -101,29 +92,15 @@ func (g *Graph) Merge(entry, exit *Node, name string) error {
 		g.AddEdge(name, succ.Name, true, edge.Attrs)
 	}
 
-	// Remove the nodes and edges between entry and exit, inclusively.
-	g.removeUntil(entry, exit)
+	// Remove old nodes.
+	for _, node := range nodes {
+		g.delNode(node)
+	}
 
 	// Recalculate the dominator tree.
 	buildDomTree(g)
 
 	return nil
-}
-
-// removeUntil removes the node, its edges and any of its successors recursively
-// until the exit node is reached.
-//
-// NOTE: the dominator tree has to recalculated (e.g. buildDomTree) afterwards.
-func (g *Graph) removeUntil(node, exit *Node) {
-	if node != exit {
-		// Remove any successors of the node.
-		for _, succ := range node.Succs {
-			g.removeUntil(succ, exit)
-		}
-	}
-
-	// Remove the node and all of its edges.
-	g.delNode(node)
 }
 
 // delNode deletes the node and all of its edges from the graph.

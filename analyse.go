@@ -25,6 +25,8 @@ func NewAnalysedGraph(graph *ast.Graph) *Graph {
 	g := NewGraph()
 	Analyse(graph, g)
 
+	// TODO: Make deterministic.
+
 	// Add edges between each node for the dominator tree construction.
 	for src, dsts := range g.Edges.SrcToDsts {
 		for dst := range dsts {

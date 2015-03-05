@@ -19,8 +19,10 @@
 package dot
 
 import (
-	"github.com/awalterschulze/gographviz/ast"
-	"github.com/awalterschulze/gographviz/parser"
+	"io/ioutil"
+
+	"github.com/mewfork/dot/ast"
+	"github.com/mewfork/dot/parser"
 )
 
 var _ Interface = NewGraph()
@@ -50,4 +52,13 @@ func Read(buf []byte) (*Graph, error) {
 		return nil, err
 	}
 	return NewAnalysedGraph(st), nil
+}
+
+// ParseFile parses the provided DOT file into a graph.
+func ParseFile(path string) (*Graph, error) {
+	buf, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	return Read(buf)
 }
