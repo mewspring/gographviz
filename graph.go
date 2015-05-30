@@ -97,6 +97,19 @@ func (g *Graph) Replace(nodes []*Node, name string, entry, exit *Node) error {
 		g.delNode(node)
 	}
 
+	// Make sure that the "entry" node is first in the list.
+	for index, node := range g.Nodes.Nodes {
+		if node.Attrs != nil && node.Attrs["label"] == "entry" {
+			if index != 0 {
+				// Swap.
+				g.Nodes.Nodes[0], g.Nodes.Nodes[index] = g.Nodes.Nodes[index], g.Nodes.Nodes[0]
+				g.Nodes.Nodes[0].Index = 0
+				g.Nodes.Nodes[index].Index = index
+			}
+			break
+		}
+	}
+
 	// Recalculate the dominator tree.
 	buildDomTree(g)
 
