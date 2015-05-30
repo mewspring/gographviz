@@ -23,6 +23,7 @@ package dot
 import (
 	"fmt"
 	"io"
+	"log"
 	"math/big"
 	"os"
 	"sort"
@@ -120,6 +121,13 @@ func (lt *ltState) link(v, w *Node) {
 // Precondition: all blocks are reachable (e.g. optimizeBlocks has been run).
 //
 func buildDomTree(f *Graph) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Println("### PANIC ### when building dominator tree for:")
+			fmt.Println(f)
+		}
+	}()
+
 	// The step numbers refer to the original LT paper; the
 	// reordering is due to Georgiadis.
 
