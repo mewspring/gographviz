@@ -31,6 +31,26 @@ func (node *Node) String() string {
 	return node.Name
 }
 
+// HasPred reports whether m is a predecessor of n.
+func (n *Node) HasPred(m *Node) bool {
+	for _, pred := range n.Preds {
+		if pred == m {
+			return true
+		}
+	}
+	return false
+}
+
+// HasSucc reports whether m is a successor of n.
+func (n *Node) HasSucc(m *Node) bool {
+	for _, succ := range n.Succs {
+		if succ == m {
+			return true
+		}
+	}
+	return false
+}
+
 // addEdge adds a control-flow graph edge from from to to.
 func addEdge(from, to *Node) {
 	from.Succs = append(from.Succs, to)
