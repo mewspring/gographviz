@@ -103,6 +103,13 @@ func (this *writer) Write() *ast.Graph {
 
 	t.StmtList = appendAttrs(t.StmtList, this.Attrs)
 
+	nodes := this.Nodes.Sorted()
+	for _, n := range nodes {
+		if _, ok := this.writtenLocations[n.Name]; !ok {
+			t.StmtList = append(t.StmtList, this.newNodeStmt(n.Name))
+		}
+	}
+
 	for _, edge := range this.Edges.Edges {
 		t.StmtList = append(t.StmtList, this.newEdgeStmt(edge))
 	}
@@ -111,13 +118,6 @@ func (this *writer) Write() *ast.Graph {
 	for _, s := range subGraphs {
 		if _, ok := this.writtenLocations[s.Name]; !ok {
 			t.StmtList = append(t.StmtList, this.newSubGraph(s.Name))
-		}
-	}
-
-	nodes := this.Nodes.Sorted()
-	for _, n := range nodes {
-		if _, ok := this.writtenLocations[n.Name]; !ok {
-			t.StmtList = append(t.StmtList, this.newNodeStmt(n.Name))
 		}
 	}
 
