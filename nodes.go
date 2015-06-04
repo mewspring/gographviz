@@ -142,3 +142,32 @@ func (this Nodes) Sorted() []*Node {
 	}
 	return nodes
 }
+
+// DomSorted returns a sorted list of nodes in dominance order.
+func (this Nodes) DomSorted() []*Node {
+	nodes := make([]*Node, len(this.Nodes))
+	copy(nodes, this.Nodes)
+	sort.Sort(domOrder(nodes))
+	return nodes
+}
+
+// domOrder attaches the methods of sort.Interface to []*Node, sorting in
+// dominance order.
+type domOrder []*Node
+
+func (ns domOrder) Less(i, j int) bool {
+	if ns[i].Dominates(ns[j]) {
+		return true
+	} else if ns[j].Dominates(ns[i]) {
+		return false
+	}
+	return ns[i].Name < ns[j].Name
+}
+
+func (ns domOrder) Len() int {
+	return len(ns)
+}
+
+func (ns domOrder) Swap(i, j int) {
+	ns[i], ns[j] = ns[j], ns[i]
+}

@@ -103,7 +103,7 @@ func (this *writer) Write() *ast.Graph {
 
 	t.StmtList = appendAttrs(t.StmtList, this.Attrs)
 
-	nodes := this.Nodes.Sorted()
+	nodes := this.Nodes.DomSorted()
 	for _, n := range nodes {
 		if _, ok := this.writtenLocations[n.Name]; !ok {
 			t.StmtList = append(t.StmtList, this.newNodeStmt(n.Name))

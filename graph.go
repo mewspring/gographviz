@@ -74,34 +74,43 @@ func (g *Graph) Replace(nodes []*Node, name string, entry, exit *Node) error {
 	// Create a new node of the given name, with incoming edges from the
 	// predecessors and outgoing edges to the successors.
 	g.AddNode(g.Name, name, nil)
-	node := g.Nodes.Lookup[name]
+	postNode := g.Nodes.Lookup[name]
 
 	// Add edge from each predecessor to node.
-	node.Preds = entry.Preds
+	postNode.Preds = entry.Preds
 	for _, pred := range entry.Preds {
-		pred.Succs = append(pred.Succs, node)
+		pred.Succs = append(pred.Succs, postNode)
 		edge := g.Edges.SrcToDsts[pred.Name][entry.Name]
 		g.AddEdge(pred.Name, name, true, edge.Attrs)
 	}
 
 	// Add edge from node to each successor.
-	node.Succs = exit.Succs
+	postNode.Succs = exit.Succs
 	for _, succ := range exit.Succs {
-		succ.Preds = append(succ.Preds, node)
+		succ.Preds = append(succ.Preds, postNode)
 		edge := g.Edges.DstToSrcs[succ.Name][exit.Name]
 		g.AddEdge(name, succ.Name, true, edge.Attrs)
 	}
 
-	// Remove old nodes.
-	for _, node := range nodes {
-		g.delNode(node)
+	// Remove pre-merge nodes.
+	for _, preNode := range nodes {
+		// Propagage "entry" label from pre-merge nodes to post-merge node.
+		if preNode.Attrs != nil && preNode.Attrs["label"] == "entry" {
+			if postNode.Attrs == nil {
+				postNode.Attrs = NewAttrs()
+			}
+			postNode.Attrs["label"] = "entry"
+		}
+		g.delNode(preNode)
 	}
 
-	// Make sure that the "entry" node is first in the list.
+	// Make sure that the "entry" node is the 0th node in the list.
 	for index, node := range g.Nodes.Nodes {
 		if node.Attrs != nil && node.Attrs["label"] == "entry" {
 			if index != 0 {
-				// Swap.
+				// The dominator tree construction algorithm requires that the
+				// "entry" node is the 0th node in the list; swap nodes to meet this
+				// requirement.
 				g.Nodes.Nodes[0], g.Nodes.Nodes[index] = g.Nodes.Nodes[index], g.Nodes.Nodes[0]
 				g.Nodes.Nodes[0].Index = 0
 				g.Nodes.Nodes[index].Index = index
