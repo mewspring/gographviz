@@ -156,6 +156,14 @@ func (this Nodes) DomSorted() []*Node {
 type domOrder []*Node
 
 func (ns domOrder) Less(i, j int) bool {
+	// The "entry" node is always first.
+	if ns[i].Attrs != nil && ns[i].Attrs["label"] == "entry" {
+		return true
+	}
+	if ns[j].Attrs != nil && ns[j].Attrs["label"] == "entry" {
+		return false
+	}
+
 	if ns[i].Dominates(ns[j]) {
 		return true
 	} else if ns[j].Dominates(ns[i]) {
