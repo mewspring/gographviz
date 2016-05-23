@@ -16,7 +16,8 @@ package dot
 
 import (
 	"fmt"
-	"github.com/awalterschulze/gographviz/ast"
+
+	"github.com/mewspring/dot/ast"
 )
 
 type writer struct {

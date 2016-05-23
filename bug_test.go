@@ -1,9 +1,10 @@
 package dot
 
 import (
-	"github.com/awalterschulze/gographviz/ast"
-	"github.com/awalterschulze/gographviz/parser"
 	"testing"
+
+	"github.com/mewspring/dot/ast"
+	"github.com/mewspring/dot/parser"
 )
 
 type bugSubGraphWorldVisitor struct {

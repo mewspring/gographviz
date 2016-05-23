@@ -17,7 +17,7 @@ package dot
 import (
 	"fmt"
 
-	"github.com/mewfork/dot/ast"
+	"github.com/mewspring/dot/ast"
 )
 
 //Creates a Graph structure by analysing an Abstract Syntax Tree representing a parsed graph.

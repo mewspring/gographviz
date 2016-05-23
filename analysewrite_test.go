@@ -16,10 +16,11 @@ package dot
 
 import (
 	"fmt"
-	"github.com/awalterschulze/gographviz/parser"
 	"io/ioutil"
 	"os"
 	"testing"
+
+	"github.com/mewspring/dot/parser"
 )
 
 func (this *Nodes) String() string {

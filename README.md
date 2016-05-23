@@ -8,14 +8,14 @@ This project is a *work in progress*. The implementation is *incomplete* and sub
 
 # dot
 
-[![GoDoc](https://godoc.org/github.com/mewfork/dot?status.svg)](https://godoc.org/github.com/mewfork/dot)
+[![GoDoc](https://godoc.org/github.com/mewspring/dot?status.svg)](https://godoc.org/github.com/mewspring/dot)
 
 The dot project implements a graphviz DOT language parser, which was generated using the [gocc] compiler toolkit.
 
 ## Changes
 
 * Add dominator tree support (based on a modified version of [x/tools/go/ssa][ssa].
-* Return [*Graph](https://godoc.org/github.com/mewfork/dot#Graph) instead of [Interface](https://godoc.org/github.com/mewfork/dot#Interface) from the [Read](https://godoc.org/github.com/mewfork/dot#Read) and [NewAnalysedGraph](https://godoc.org/github.com/mewfork/dot#NewAnalysedGraph) functions.
+* Return [*Graph](https://godoc.org/github.com/mewspring/dot#Graph) instead of [Interface](https://godoc.org/github.com/mewspring/dot#Interface) from the [Read](https://godoc.org/github.com/mewspring/dot#Read) and [NewAnalysedGraph](https://godoc.org/github.com/mewspring/dot#NewAnalysedGraph) functions.
 
 [x/tools/go/ssa]: https://godoc.org/golang.org/x/tools/go/ssa
 
@@ -33,5 +33,5 @@ Portions of [gocc]'s source code have been derived from Go, and are covered by a
 
 The dominator tree support is directly derived from [x/tools/go/ssa], which is part of the Go project and governed by a [BSD license](http://golang.org/LICENSE).
 
-[gographviz]: https://code.google.com/p/gographviz/
-[gocc]: https://code.google.com/p/gocc/
+[gographviz]: https://github.com/awalterschulze/gographviz
+[gocc]: https://github.com/goccmack/gocc

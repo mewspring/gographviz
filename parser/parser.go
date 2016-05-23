@@ -17,9 +17,9 @@ package parser
 import (
 	"errors"
 	"strconv"
-)
 
-import "github.com/awalterschulze/gographviz/token"
+	"github.com/mewspring/dot/token"
+)
 
 type (
 	ActionTab []ActionRow

@@ -21,8 +21,8 @@ package dot
 import (
 	"io/ioutil"
 
-	"github.com/mewfork/dot/ast"
-	"github.com/mewfork/dot/parser"
+	"github.com/mewspring/dot/ast"
+	"github.com/mewspring/dot/parser"
 )
 
 var _ Interface = NewGraph()

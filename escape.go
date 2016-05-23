@@ -16,11 +16,12 @@ package dot
 
 import (
 	"fmt"
-	"github.com/awalterschulze/gographviz/scanner"
-	"github.com/awalterschulze/gographviz/token"
 	"strings"
 	"text/template"
 	"unicode"
+
+	"github.com/mewspring/dot/scanner"
+	"github.com/mewspring/dot/token"
 )
 
 type Escape struct {
