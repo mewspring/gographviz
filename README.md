@@ -1,6 +1,6 @@
 ## Fork
 
-[![Join the chat at https://gitter.im/mewspring/dot](https://badges.gitter.im/mewspring/dot.svg)](https://gitter.im/mewspring/dot?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Join the chat at https://gitter.im/mewspring/dot](https://badges.gitter.im/mewspring/dot.svg)](https://gitter.im/mewspring/dot)
 
 This is a fork of the [gographviz] package.
 
