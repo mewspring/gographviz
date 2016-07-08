@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"math/rand"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/mewspring/dot/token"
@@ -677,22 +676,11 @@ func NewId(id Elem) (Id, error) {
 		return Id(""), nil
 	}
 	id_lit := string(id.(*token.Token).Lit)
-	if strings.HasPrefix(id_lit, `"`) && strings.HasSuffix(id_lit, `"`) {
-		var err error
-		id_lit, err = strconv.Unquote(id_lit)
-		if err != nil {
-			return Id(""), err
-		}
-	}
 	return Id(id_lit), nil
 }
 
 func (this Id) String() string {
-	s := string(this)
-	if strings.Contains(s, " ") {
-		return fmt.Sprintf("%q", s)
-	}
-	return s
+	return string(this)
 }
 
 func (this Id) Walk(v Visitor) {
